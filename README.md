@@ -40,3 +40,11 @@ pnpm test
 - `.openai/hosting.json`：Sites 身分與資料庫綁定。
 
 憑證、個人打卡資料、建置輸出與本機資料庫不納入版本控制。
+
+## GitHub Pages 版本
+
+`docs/` 是可直接在 GitHub Pages 運行的靜態版本，介面與主要打卡功能來自同一份網站。`pages-src/` 保留可編輯原始碼。
+
+啟用方式：Settings → Pages → Deploy from a branch → main → /docs → Save。
+
+此版本的紀錄僅保存在目前瀏覽器的 localStorage，不會跨裝置同步；清除網站資料或使用無痕模式可能遺失紀錄。程式庫不包含任何實際打卡資料。原本的 Sites 版本仍使用私人登入與雲端儲存，兩個版本的紀錄各自獨立。
