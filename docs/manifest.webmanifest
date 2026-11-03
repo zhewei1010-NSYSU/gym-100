@@ -1,0 +1,26 @@
+{
+  "name": "健身房 100 次",
+  "short_name": "GYM100",
+  "description": "每一次，都算數。你的健身打卡本。",
+  "lang": "zh-Hant",
+  "display": "standalone",
+  "background_color": "#faf9fc",
+  "theme_color": "#7555c9",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "./",
+  "start_url": "./",
+  "scope": "./"
+}
