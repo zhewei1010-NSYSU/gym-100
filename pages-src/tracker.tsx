@@ -1,5 +1,6 @@
 import { localFetch as fetch } from "./storage";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createSurpriseDeck } from "../lib/checkin-surprise";
 import { ArrowRight, Check, ChevronDown, CircleCheck, Cloud, Dumbbell, History, LoaderCircle, LockKeyhole, Plus, Sparkles, Trash2, X, CalendarDays, ArrowUpRight } from "lucide-react";
 type RecordEntry = {id:string;date:string;note:string;createdAt:string};
 const taipeiToday=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
@@ -17,6 +18,8 @@ export default function GymTracker() {
   const [error,setError]=useState("");
   const [unauthorized,setUnauthorized]=useState(false);
   const [toast,setToast]=useState("");
+  const [surprise,setSurprise]=useState("");
+  const surpriseDeck=useRef<ReturnType<typeof createSurpriseDeck>|null>(null);
   const [modal,setModal]=useState(false);
   const [removing,setRemoving]=useState<RecordEntry|null>(null);
   const [date,setDate]=useState(taipeiToday);
@@ -55,7 +58,9 @@ export default function GymTracker() {
       const refresh=await fetch("/api/checkins",{cache:"no-store"});
       if(refresh.ok){const latest=await refresh.json() as {records:RecordEntry[]};setRecords(sorted(latest.records));}
       else setRecords(current=>sorted([...current.filter(r=>r.id!==data.record.id),data.record]));
-      retryRef.current=null;setModal(false);setNote("");setToast("打卡成功！又為自己累積了一次。");
+      retryRef.current=null;setModal(false);setNote("");setToast("打卡成功！");
+      surpriseDeck.current ??= createSurpriseDeck();
+      setSurprise(surpriseDeck.current());
     } catch(e){setError(e instanceof Error?e.message:"儲存失敗，請重試。");}
     finally{pendingRef.current=false;setSaving(false);}
   }
@@ -76,7 +81,7 @@ export default function GymTracker() {
           <div className="progress-copy"><span className="card-overline" id="progress-title">我的 100 次挑戰</span><div className="big-count"><span data-testid="total-count">{loading?"—":count}</span><span className="count-unit">/ 100 <small>次</small></span></div><p className="count-caption">{count>=100?"100 次達成！持續累積你的每一次。":count===0?"你的第一步，從今天開始。":`已經為自己出發 ${count} 次，繼續保持。`}</p><div className="progress-facts"><div><span>本月累積</span><strong>{loading?"—":monthCount}<small>次</small></strong></div><div><span>{count>=100?"挑戰狀態":"距離目標"}</span><strong>{count>=100?"已完成":loading?"—":100-count}{count<100&&<small>次</small>}</strong></div></div></div>
           <div className="ring-wrap"><svg viewBox="0 0 240 240" className="progress-ring" role="progressbar" aria-label="100 次挑戰完成進度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><circle className="ring-track" cx="120" cy="120" r="100"/><circle className="ring-fill" cx="120" cy="120" r="100" pathLength="100" strokeDasharray="100" strokeDashoffset={100-progress}/></svg><div className="ring-label"><span className="ring-mini"><Sparkles size={18}/></span><strong data-testid="progress-percent">{loading?"—":progress}<small>%</small></strong><span>挑戰完成度</span></div><span className="ring-start">每一圈，都是新的自己</span></div>
         </section>
-        <section className="checkin-card"><div className="checkin-heading"><span className="card-overline">把今天，留給更好的自己</span><span className="mini-icon"><Dumbbell size={19}/></span></div><div className="today-date">{formatDate(today,{month:"long",day:"numeric"})}<span>{formatDate(today,{weekday:"long"})}</span></div><p className="checkin-caption">{todayCount>0?`今天已打卡 ${todayCount} 次，做得很好。`:"運動完了嗎？記下今天的努力。"}</p><button className="primary-button checkin-button" onClick={()=>add(taipeiToday())} disabled={loading||saving||!!error}><span>{saving?<LoaderCircle className="spin" size={20}/>:<Plus size={21}/>} {saving?"儲存中…":"今天打卡 +1"}</span><ArrowRight size={20}/></button><button className="backfill-button" disabled={loading||saving||!!error} onClick={()=>{setDate(taipeiToday());setNote("");setModal(true);}}><CalendarDays size={15}/>補登其他日期</button><div className="checkin-footnote"><LockKeyhole size={12}/>紀錄保存在此瀏覽器，不會跨裝置同步</div></section>
+        <section className="checkin-card"><div className="checkin-heading"><span className="card-overline">把今天，留給更好的自己</span><span className="mini-icon"><Dumbbell size={19}/></span></div><div className="today-date">{formatDate(today,{month:"long",day:"numeric"})}<span>{formatDate(today,{weekday:"long"})}</span></div><p className="checkin-caption">{todayCount>0?`今天已打卡 ${todayCount} 次，做得很好。`:"運動完了嗎？記下今天的努力。"}</p><button className="primary-button checkin-button" onClick={()=>add(taipeiToday())} disabled={loading||saving||!!error}><span>{saving?<LoaderCircle className="spin" size={20}/>:<Plus size={21}/>} {saving?"儲存中…":"今天打卡 +1"}</span><ArrowRight size={20}/></button><button className="backfill-button" disabled={loading||saving||!!error} onClick={()=>{setDate(taipeiToday());setNote("");setModal(true);}}><CalendarDays size={15}/>補登其他日期</button>{surprise&&<div className="checkin-surprise" role="status" aria-live="polite" aria-atomic="true"><div><span className="surprise-label"><Sparkles size={14}/>打卡成功・送你一句</span><p>{surprise}</p></div><button className="icon-button" aria-label="收起這次驚喜" onClick={()=>setSurprise("")}><X size={16}/></button></div>}<div className="checkin-footnote"><LockKeyhole size={12}/>紀錄保存在此瀏覽器，不會跨裝置同步</div></section>
       </div>
       <div className="details-grid">
         <section className="journey-card" aria-labelledby="journey-title"><div className="section-heading"><div><p className="eyebrow muted">YOUR JOURNEY</p><h2 id="journey-title">100 次，慢慢累積</h2></div><span className="tiny-pill">{progress} / 100</span></div><p className="section-description">一格代表一次。把努力，變成看得見的軌跡。</p><div className="dot-board" aria-label={`100 格進度，已完成 ${progress} 格`}>{Array.from({length:100},(_,i)=><span key={i} className={`journey-dot ${i<count?"filled":""} ${(i+1)%25===0?"milestone-dot":""}`} title={`第 ${i+1} 次${i<count?" · 已完成":""}`} aria-hidden="true">{i<count?<Check size={13}/>:((i+1)%25===0?i+1:"")}</span>)}</div><div className="board-legend"><span><i/>尚未完成</span><span><i className="done"/>已完成</span></div><div className="milestone-section"><div className="milestone-caption"><span><Sparkles size={14}/>下一個小里程碑</span><strong>{nextMilestone?`${nextMilestone} 次` : "100 次達成！"}</strong></div><div className="milestone-track">{[10,25,50,75,100].map(n=><div className={count>=n?"milestone reached":"milestone"} key={n}><span>{count>=n?<Check size={12}/>:<span/>}</span><small>{n}</small></div>)}</div><p>{nextMilestone?`再 ${nextMilestone-count} 次，就能抵達下一站。`:"你做到了。下一段旅程，也為自己而走。"}</p></div></section>

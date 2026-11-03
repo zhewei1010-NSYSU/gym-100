@@ -54,6 +54,7 @@ const countText=()=>host.querySelector('[data-testid="total-count"]')?.textConte
 await act(async()=>{root.render(createElement(GymTracker));});
 await settle(()=>countText()==='0');
 assert.equal(host.querySelectorAll('.journey-dot').length,100);
+assert.equal(host.querySelector('.checkin-surprise'),null);
 await act(async()=>{host.querySelector('.checkin-button').click();host.querySelector('.checkin-button').click();});
 await settle(()=>countText()==='1');
 assert.equal(host.querySelector('[data-testid="progress-percent"]').textContent,'1%');
@@ -61,6 +62,12 @@ assert.equal(host.querySelector('[role="progressbar"]').getAttribute('aria-value
 assert.equal(host.querySelectorAll('.journey-dot.filled').length,1);
 assert.equal(host.querySelector('time').getAttribute('datetime'),day);
 assert.equal((await (await req('GET')).json()).records.length,1);
+const surprise=host.querySelector('.checkin-surprise');
+assert.ok(surprise?.querySelector('p')?.textContent);
+assert.equal(surprise.getAttribute('role'),'status');
+await act(async()=>{surprise.querySelector('button').click();});
+assert.equal(host.querySelector('.checkin-surprise'),null);
+console.log('PASS: successful check-in reveals a dismissible surprise');
 console.log('PASS: real add button updates count 0→1, percent 0→1%, ring, 100-grid, and history; double-click counts once');
 await act(async()=>{root.unmount();});root=createRoot(host);
 await act(async()=>{root.render(createElement(GymTracker));});
